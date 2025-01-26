@@ -1,74 +1,67 @@
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect, useState } from 'react';
+import {PokeballSvg} from './components/PokeballSvg'
 import {
-  ActivityIndicator, StyleSheet, Text, View, Image,
-  SectionList, FlatList, TouchableHighlight,
-  TouchableOpacity
+  StyleSheet, View,Text,
+  Image, TouchableHighlight, FlatList,
+  SafeAreaView
 } from 'react-native';
-import { getTypesData } from './lib/pokedata';
-
-type PokemonType = {
-  id:Number,
-  name:String,
-  spriteUrl:String
-}
-
-const TypeContainer = ({type, index}:{type:PokemonType, index:Number}) => {
-  return (
-    <TouchableHighlight>
-      <Text>{type.name}</Text>
-    </TouchableHighlight>
-  )
-}
+import { useEffect, useState } from 'react';
+import { generateTeamPokemon } from './lib/getPokemons';
+import { PokemonInfoType } from './types';
+import { PokemonCard } from './components/PokemonCard/PokemonCard';
+import { useFonts } from 'expo-font';
 
 export default function App() {
-  const [types, setTypes] = useState<Array<PokemonType>>([])
-  const [expanded, setExpanded] = useState(false)
+  const [fontsLoaded] = useFonts({
+    Flexo: require("./assets/fonts/Flexo-Demi.ttf")
+  })
 
-  const getPokemonTypes = async () => {
-    const data:PokemonType[] = await getTypesData()
-    setTypes(data)
+  const [pokemons, setPokemons] = useState<Array<PokemonInfoType>|[]>()
+  
+  const getPokemons = async() => {
+    const data = await generateTeamPokemon()
     console.log(data)
+    setPokemons(data)
   }
 
-  const toggleExpanded = useCallback(()=>setExpanded(!expanded), [expanded])
+  const reGeneratePokes = () => {
+    alert("RegeneratePoke's")
+    setPokemons([])
+    getPokemons()
+  }
 
-  useEffect(() => {
-    getPokemonTypes()
+  useEffect(()=>{
+    getPokemons()
   },[])
 
   return (
     <View style={styles.container}>
-      {types.length===0 ? (
-        <ActivityIndicator/>
-      ) : (
-        <View>
-          <TouchableOpacity
-          style={styles.button}
-          activeOpacity={0.8}
-          onPress={toggleExpanded}>
-            <Text style={styles.text}>All Types</Text>
-          </TouchableOpacity>
-          {expanded
-            ?
-              <View style={styles.options}>
-                <FlatList
-                  data={types}
-                  keyExtractor={((type) => type.id.toString())}
-                  renderItem={({item, index}) => <TypeContainer type={item} index={index}/>}
-                  />
-              </View>
-            : null}
-        </View>
-
-        //   types.map((type)=>(
-        //     <View key={type.id.toString()}>
-        //       <Text>{type.name}</Text>
-        //       <Image source={{uri: type.spriteUrl.toString()}} style={styles.imageType} />
-        //     </View>
-        // ))
-      )}
       <StatusBar style="auto" />
+        {/* <PokeTypesSelect/> */}
+        {/* <View style={styles.pokeballContainer}> */}
+          {/* <PokeballSvg/> */}
+          <View style={styles.pokeListContainer}>
+            <FlatList
+              style={{padding: 20, gap: 20}}
+              data={pokemons}
+              keyExtractor={(poke) => poke.id.toLocaleString()}
+              renderItem={({item}) => (<PokemonCard pokeData={item}/>)}
+            />
+          </View>
+            {/* Regenerate Button */}
+            <TouchableHighlight
+              style={styles.primaryBtn}
+              onPress={reGeneratePokes}
+            >
+              <Text style={styles.primaryBtnText}>Generar</Text>
+            </TouchableHighlight>
+          {/* {pokemons!==undefined && (
+            <Image 
+              source={{uri: pokemons.spriteUrl.toString()}}
+              style={{width: "80%", height:"80%"}}
+            />
+          )} */}
+        {/* </View> */}
     </View>
   );
 }
@@ -79,34 +72,30 @@ const styles = StyleSheet.create({
     backgroundColor: '#ddd',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 20,
+    // paddingHorizontal: 20,
   },
-  options: {
-    position: "absolute",
-    top: 53,
-    backgroundColor: "white",
-    width:"100%",
-    padding:10,
-    borderRadius:6
-  },
-  imageType:{
+  pokeListContainer:{
     width: "100%",
-    height: 20,
-    resizeMode:"center"
+    // maxHeight: 600
   },
-  text:{
-    fontSize:15,
-    opacity:0.8,
-    width:"100%"
-  },
-  button: {
-    height: 50,
-    justifyContent: "space-between",
-    backgroundColor: "#fff",
-    flexDirection:"row",
-    width: "100%",
+  // pokeballContainer: {
+  //   width: 400,
+  //   height:400
+  // },
+  primaryBtn: {
+    backgroundColor:"#313131",
+    color:"#f2f2f2",
+    // height:60
+    padding:20,
+    borderRadius: 12,
+    justifyContent:"center",
     alignItems:"center",
-    paddingHorizontal:15,
-    borderRadius:8,
+    fontFamily:"Flexo"
   },
+  primaryBtnText:{
+    color:"#f2f2f2",
+    fontSize: 36,
+    fontFamily:"Flexo"
+
+  }
 });
